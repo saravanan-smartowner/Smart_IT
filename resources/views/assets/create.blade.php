@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Asset</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="text"], input[type="date"], input[type="number"], textarea, select {
-            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
-        }
-        button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>Create New Asset</h1>
+@extends('layouts.app') {{-- Assuming you have a layout file --}}
 
-    @if ($errors->any())
-        <div style="color: red;">
+@section('content')
+<div class="container">
+    <h1>Add New Asset</h1>
+
+    @if (\$errors->any())
+        <div class="alert alert-danger">
             <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                @foreach (\$errors->all() as \$error)
+                    <li>{{ \$error }}</li>
                 @endforeach
             </ul>
         </div>
@@ -28,61 +17,87 @@
     <form action="{{ route('assets.store') }}" method="POST">
         @csrf
         <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{{ old('name') }}" required>
+            <label for="name">Asset Name/Identifier</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="asset_type">Asset Type:</label>
-            <input type="text" id="asset_type" name="asset_type" value="{{ old('asset_type') }}" required>
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description">{{ old('description') }}</textarea>
         </div>
+
         <div class="form-group">
-            <label for="description">Description:</label>
-            <textarea id="description" name="description">{{ old('description') }}</textarea>
+            <label for="asset_type">Asset Type (e.g., Laptop, Monitor)</label>
+            <input type="text" class="form-control" id="asset_type" name="asset_type" value="{{ old('asset_type') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="serial_number">Serial Number:</label>
-            <input type="text" id="serial_number" name="serial_number" value="{{ old('serial_number') }}">
+            <label for="serial_number">Serial Number</label>
+            <input type="text" class="form-control" id="serial_number" name="serial_number" value="{{ old('serial_number') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="purchase_date">Purchase Date:</label>
-            <input type="date" id="purchase_date" name="purchase_date" value="{{ old('purchase_date') }}">
+            <label for="model_number">Model Number</label>
+            <input type="text" class="form-control" id="model_number" name="model_number" value="{{ old('model_number') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="purchase_cost">Purchase Cost:</label>
-            <input type="number" id="purchase_cost" name="purchase_cost" step="0.01" value="{{ old('purchase_cost') }}">
+            <label for="category">Category (e.g., IT, Electronics)</label> {{-- Or specific categories from your spec --}}
+            <input type="text" class="form-control" id="category" name="category" value="{{ old('category') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="status">Status:</label>
-            <input type="text" id="status" name="status" value="{{ old('status') }}" required>
+            <label for="purchase_date">Purchase Date</label>
+            <input type="date" class="form-control" id="purchase_date" name="purchase_date" value="{{ old('purchase_date') }}">
         </div>
+
         <div class="form-group">
-            <label for="location">Location:</label>
-            <input type="text" id="location" name="location" value="{{ old('location') }}">
+            <label for="purchase_cost">Purchase Cost</label>
+            <input type="number" step="0.01" class="form-control" id="purchase_cost" name="purchase_cost" value="{{ old('purchase_cost') }}">
         </div>
-        {{-- Assuming you'll pass $users and $vendors to the view from the controller's create method --}}
-        {{-- <div class="form-group">
-            <label for="assigned_to">Assigned To (User ID):</label>
-            <select id="assigned_to" name="assigned_to">
-                <option value="">Unassigned</option>
-                @foreach ($users as $user)
-                    <option value="{{ $user->id }}" {{ old('assigned_to') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select class="form-control" id="status" name="status" required>
+                <option value="">Select Status</option>
+                @foreach (\$statusOptions as \$option)
+                    <option value="{{ \$option }}" {{ old('status') == \$option ? 'selected' : '' }}>{{ \$option }}</option>
                 @endforeach
             </select>
         </div>
+
         <div class="form-group">
-            <label for="vendor_id">Vendor ID:</label>
-             <select id="vendor_id" name="vendor_id">
+            <label for="location">Location</label>
+            <input type="text" class="form-control" id="location" name="location" value="{{ old('location') }}">
+        </div>
+
+        <div class="form-group">
+            <label for="assigned_to">Assigned To (User)</label>
+            <select class="form-control" id="assigned_to" name="assigned_to">
                 <option value="">None</option>
-                @foreach ($vendors as $vendor)
-                    <option value="{{ $vendor->id }}" {{ old('vendor_id') == $vendor->id ? 'selected' : '' }}>{{ $vendor->name }}</option>
+                @foreach (\$users as \$user)
+                    <option value="{{ \$user->id }}" {{ old('assigned_to') == \$user->id ? 'selected' : '' }}>{{ \$user->name }}</option>
                 @endforeach
             </select>
-        </div> --}}
-        <div class="form-group">
-            <label for="notes">Notes:</label>
-            <textarea id="notes" name="notes">{{ old('notes') }}</textarea>
         </div>
-        <button type="submit">Create Asset</button>
+
+        <div class="form-group">
+            <label for="vendor_id">Vendor</label>
+            <select class="form-control" id="vendor_id" name="vendor_id">
+                <option value="">None</option>
+                @foreach (\$vendors as \$vendor)
+                    <option value="{{ \$vendor->id }}" {{ old('vendor_id') == \$vendor->id ? 'selected' : '' }}>{{ \$vendor->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea class="form-control" id="notes" name="notes">{{ old('notes') }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Asset</button>
+        <a href="{{ route('assets.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
-</body>
-</html>
+</div>
+@endsection
