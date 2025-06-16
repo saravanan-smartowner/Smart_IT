@@ -1,73 +1,123 @@
-@extends('layouts.app')
+<?php
 
-@section('content')
-<div class="container">
-    <h1>Add New Software License</h1>
+namespace App\Http\Controllers;
 
-    @if (\$errors->any())
-        <div class="alert alert-danger">
-            <ul>
-                @foreach (\$errors->all() as \$error)
-                    <li>{{ \$error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+use App\Models\SoftwareLicense;
+use App\Models\Vendor;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
-    <form action="{{ route('software_licenses.store') }}" method="POST">
-        @csrf
-        <div class="form-group">
-            <label for="software_name">Software Name</label>
-            <input type="text" class="form-control" id="software_name" name="software_name" value="{{ old('software_name') }}" required>
-        </div>
+class SoftwareLicenseController extends Controller
+{
+    public function __construct()
+    {
+        \$this->middleware('auth');
+        // Example: Admin or IT Manager can manage software licenses
+        \$this->middleware('role:Admin')->except(['index', 'show']);
+        \$this->middleware('role:IT Manager')->except(['destroy']); 
+    }
 
-        <div class="form-group">
-            <label for="version">Version</label>
-            <input type="text" class="form-control" id="version" name="version" value="{{ old('version') }}">
-        </div>
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        \$software_licenses = SoftwareLicense::with('vendor')->latest()->get();
+        return view('software_licenses.index', compact('software_licenses'));
+    }
 
-        <div class="form-group">
-            <label for="license_key">License Key / Subscription ID</label>
-            <input type="text" class="form-control" id="license_key" name="license_key" value="{{ old('license_key') }}">
-        </div>
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        \$vendors = Vendor::all();
+        return view('software_licenses.create', compact('vendors'));
+    }
 
-        <div class="form-group">
-            <label for="number_of_licenses">Number of Licenses/Users (0 for unlimited)</label>
-            <input type="number" class="form-control" id="number_of_licenses" name="number_of_licenses" value="{{ old('number_of_licenses', 1) }}" min="0">
-        </div>
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request \$request)
+    {
+        \$validator = Validator::make(\$request->all(), [
+            'software_name' => 'required|string|max:255',
+            'version' => 'nullable|string|max:100',
+            'license_key' => 'nullable|string|max:255|unique:software_licenses,license_key',
+            'number_of_licenses' => 'nullable|integer|min:0', // 0 might mean unlimited/site license
+            'activation_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:activation_date',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'support_contact_info' => 'nullable|string|max:255',
+            'linked_office_location' => 'nullable|string|max:255',
+        ]);
 
-        <div class="form-group">
-            <label for="activation_date">Activation Date</label>
-            <input type="date" class="form-control" id="activation_date" name="activation_date" value="{{ old('activation_date') }}">
-        </div>
+        if (\$validator->fails()) {
+            return redirect()->route('software_licenses.create')
+                        ->withErrors(\$validator)
+                        ->withInput();
+        }
 
-        <div class="form-group">
-            <label for="expiry_date">Expiry Date</label>
-            <input type="date" class="form-control" id="expiry_date" name="expiry_date" value="{{ old('expiry_date') }}">
-        </div>
+        SoftwareLicense::create(\$request->all());
 
-        <div class="form-group">
-            <label for="vendor_id">Vendor</label>
-            <select class="form-control" id="vendor_id" name="vendor_id">
-                <option value="">Select Vendor (if applicable)</option>
-                @foreach (\$vendors as \$vendor)
-                    <option value="{{ \$vendor->id }}" {{ old('vendor_id') == \$vendor->id ? 'selected' : '' }}>{{ \$vendor->name }}</option>
-                @endforeach
-            </select>
-        </div>
+        return redirect()->route('software_licenses.index')->with('success', 'Software license created successfully.');
+    }
 
-        <div class="form-group">
-            <label for="support_contact_info">Support Contact Info</label>
-            <input type="text" class="form-control" id="support_contact_info" name="support_contact_info" value="{{ old('support_contact_info') }}">
-        </div>
+    /**
+     * Display the specified resource.
+     */
+    public function show(SoftwareLicense \$software_license)
+    {
+        \$software_license->load('vendor');
+        return view('software_licenses.show', compact('software_license'));
+    }
 
-        <div class="form-group">
-            <label for="linked_office_location">Linked Office Location</label>
-            <input type="text" class="form-control" id="linked_office_location" name="linked_office_location" value="{{ old('linked_office_location') }}">
-        </div>
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(SoftwareLicense \$software_license)
+    {
+        \$vendors = Vendor::all();
+        return view('software_licenses.edit', compact('software_license', 'vendors'));
+    }
 
-        <button type="submit" class="btn btn-primary">Save License</button>
-        <a href="{{ route('software_licenses.index') }}" class="btn btn-secondary">Cancel</a>
-    </form>
-</div>
-@endsection
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request \$request, SoftwareLicense \$software_license)
+    {
+        \$validator = Validator::make(\$request->all(), [
+            'software_name' => 'required|string|max:255',
+            'version' => 'nullable|string|max:100',
+            'license_key' => 'nullable|string|max:255|unique:software_licenses,license_key,' . \$software_license->id,
+            'number_of_licenses' => 'nullable|integer|min:0',
+            'activation_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:activation_date',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'support_contact_info' => 'nullable|string|max:255',
+            'linked_office_location' => 'nullable|string|max:255',
+        ]);
+
+        if (\$validator->fails()) {
+            return redirect()->route('software_licenses.edit', \$software_license->id)
+                        ->withErrors(\$validator)
+                        ->withInput();
+        }
+
+        \$software_license->update(\$request->all());
+
+        return redirect()->route('software_licenses.index')->with('success', 'Software license updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(SoftwareLicense \$software_license)
+    {
+        // Consider if there are related items (e.g., assets using this license)
+        // that need to be handled before deletion.
+        \$software_license->delete();
+        return redirect()->route('software_licenses.index')->with('success', 'Software license deleted successfully.');
+    }
+}
