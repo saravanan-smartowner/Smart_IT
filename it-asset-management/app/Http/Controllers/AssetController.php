@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
+use App\Models\User; // For assigned_to dropdown
+use App\Models\Vendor; // For vendor_id dropdown
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule; // For status enum type validation
 
 class AssetController extends Controller
 {
@@ -22,7 +25,7 @@ class AssetController extends Controller
      */
     public function index()
     {
-        \$assets = Asset::all();
+        \$assets = Asset::with(['assignedToUser', 'vendor'])->get(); // Eager load relationships
         return view('assets.index', ['assets' => \$assets]);
     }
 
@@ -31,7 +34,11 @@ class AssetController extends Controller
      */
     public function create()
     {
-        return view('assets.create');
+        \$users = User::all(); // For 'assigned_to' dropdown
+        \$vendors = Vendor::all(); // For 'vendor_id' dropdown
+        // Define status options - these should match your application's defined statuses
+        \$statusOptions = ['In Use', 'In Stock', 'Under Repair', 'Retired'];
+        return view('assets.create', compact('users', 'vendors', 'statusOptions'));
     }
 
     /**
@@ -39,15 +46,21 @@ class AssetController extends Controller
      */
     public function store(Request \$request)
     {
+        \$statusOptions = ['In Use', 'In Stock', 'Under Repair', 'Retired'];
         \$validator = Validator::make(\$request->all(), [
-            // Assuming 'name' is a general identifier for the asset
             'name' => 'required|string|max:255',
-            'serial_number' => 'required|unique:assets,serial_number',
+            'description' => 'nullable|string',
+            'asset_type' => 'required|string|max:255', // Or use Rule::in if you have predefined types
+            'serial_number' => 'required|string|max:255|unique:assets,serial_number',
             'model_number' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'status' => 'required|string|max:255',
-            // Add other validation rules as per your asset fields in $fillable
-            // e.g., 'purchase_date' => 'nullable|date', 'purchase_cost' => 'nullable|numeric', etc.
+            'purchase_date' => 'nullable|date',
+            'purchase_cost' => 'nullable|numeric|min:0',
+            'status' => ['required', Rule::in(\$statusOptions)],
+            'location' => 'nullable|string|max:255',
+            'assigned_to' => 'nullable|exists:users,id',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'notes' => 'nullable|string',
         ]);
 
         if (\$validator->fails()) {
@@ -56,7 +69,6 @@ class AssetController extends Controller
                         ->withInput();
         }
 
-        // Ensure your \$fillable in Asset.php includes all fields you intend to mass assign
         Asset::create(\$request->all());
         return redirect()->route('assets.index')->with('success', 'Asset created successfully.');
     }
@@ -66,6 +78,7 @@ class AssetController extends Controller
      */
     public function show(Asset \$asset)
     {
+        \$asset->load(['assignedToUser', 'vendor']); // Eager load relationships
         return view('assets.show', ['asset' => \$asset]);
     }
 
@@ -74,7 +87,10 @@ class AssetController extends Controller
      */
     public function edit(Asset \$asset)
     {
-        return view('assets.edit', ['asset' => \$asset]);
+        \$users = User::all();
+        \$vendors = Vendor::all();
+        \$statusOptions = ['In Use', 'In Stock', 'Under Repair', 'Retired'];
+        return view('assets.edit', compact('asset', 'users', 'vendors', 'statusOptions'));
     }
 
     /**
@@ -82,13 +98,21 @@ class AssetController extends Controller
      */
     public function update(Request \$request, Asset \$asset)
     {
+        \$statusOptions = ['In Use', 'In Stock', 'Under Repair', 'Retired'];
         \$validator = Validator::make(\$request->all(), [
             'name' => 'required|string|max:255',
-            'serial_number' => 'required|unique:assets,serial_number,' . \$asset->id,
+            'description' => 'nullable|string',
+            'asset_type' => 'required|string|max:255',
+            'serial_number' => 'required|string|max:255|unique:assets,serial_number,' . \$asset->id,
             'model_number' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'status' => 'required|string|max:255',
-            // Add other validation rules
+            'purchase_date' => 'nullable|date',
+            'purchase_cost' => 'nullable|numeric|min:0',
+            'status' => ['required', Rule::in(\$statusOptions)],
+            'location' => 'nullable|string|max:255',
+            'assigned_to' => 'nullable|exists:users,id',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'notes' => 'nullable|string',
         ]);
 
         if (\$validator->fails()) {
