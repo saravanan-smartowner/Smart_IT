@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Credential</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="text"], input[type="password"], input[type="number"], textarea, select {
-            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
-        }
-        button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>Create New Credential</h1>
+@extends('layouts.app')
 
-    @if ($errors->any())
-        <div style="color: red;">
+@section('content')
+<div class="container">
+    <h1>Add New Secure Credential</h1>
+
+    @if (\$errors->any())
+        <div class="alert alert-danger">
             <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                @foreach (\$errors->all() as \$error)
+                    <li>{{ \$error }}</li>
                 @endforeach
             </ul>
         </div>
@@ -28,42 +17,64 @@
     <form action="{{ route('credentials.store') }}" method="POST">
         @csrf
         <div class="form-group">
-            <label for="credential_type">Credential Type:</label>
-            <input type="text" id="credential_type" name="credential_type" value="{{ old('credential_type') }}" required>
+            <label for="name">Name / System Identifier</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
+            <small class="form-text text-muted">E.g., "Primary Database Server", "Router Admin Panel"</small>
         </div>
+
         <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" value="{{ old('username') }}" required>
+            <label for="url">URL (if applicable)</label>
+            <input type="url" class="form-control" id="url" name="url" value="{{ old('url') }}" placeholder="https://example.com/admin">
         </div>
+
         <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+            <label for="ip_address">IP Address & Port (if applicable)</label>
+            <input type="text" class="form-control" id="ip_address" name="ip_address" value="{{ old('ip_address') }}" placeholder="e.g., 192.168.1.100 or 10.0.0.5:3306">
         </div>
+
         <div class="form-group">
-            <label for="asset_id">Related Asset (optional):</label>
-            {{-- Assuming $assets is passed from the controller --}}
-            <select id="asset_id" name="asset_id">
+            <label for="username">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ old('username') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password_confirmation">Confirm Password</label>
+            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+        </div>
+
+        <div class="form-group">
+            <label for="notes_configurations">Notes / Configurations</label>
+            <textarea class="form-control" id="notes_configurations" name="notes_configurations" rows="4">{{ old('notes_configurations') }}</textarea>
+            <small class="form-text text-muted">Any additional notes, API keys, configuration snippets, etc.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="asset_id">Link to Asset (Optional)</label>
+            <select class="form-control" id="asset_id" name="asset_id">
                 <option value="">None</option>
-                @foreach ($assets as $asset)
-                    <option value="{{ $asset->id }}" {{ old('asset_id') == $asset->id ? 'selected' : '' }}>{{ $asset->name }} (ID: {{ $asset->id }})</option>
+                @foreach (\$assets as \$asset)
+                    <option value="{{ \$asset->id }}" {{ old('asset_id') == \$asset->id ? 'selected' : '' }}>{{ \$asset->name }} ({{ \$asset->serial_number ?? 'N/A' }})</option>
                 @endforeach
             </select>
         </div>
+
         <div class="form-group">
-            <label for="software_license_id">Related Software License (optional):</label>
-            {{-- Assuming $software_licenses is passed from the controller --}}
-            <select id="software_license_id" name="software_license_id">
+            <label for="software_license_id">Link to Software License (Optional)</label>
+            <select class="form-control" id="software_license_id" name="software_license_id">
                 <option value="">None</option>
-                @foreach ($software_licenses as $license)
-                    <option value="{{ $license->id }}" {{ old('software_license_id') == $license->id ? 'selected' : '' }}>{{ $license->software_name }} (ID: {{ $license->id }})</option>
+                @foreach (\$software_licenses as \$license)
+                    <option value="{{ \$license->id }}" {{ old('software_license_id') == \$license->id ? 'selected' : '' }}>{{ \$license->software_name }} {{ \$license->version ?? '' }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="form-group">
-            <label for="notes">Notes:</label>
-            <textarea id="notes" name="notes">{{ old('notes') }}</textarea>
-        </div>
-        <button type="submit">Create Credential</button>
+
+        <button type="submit" class="btn btn-primary">Save Credential</button>
+        <a href="{{ route('credentials.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
-</body>
-</html>
+</div>
+@endsection
