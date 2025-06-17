@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Vendor</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input[type="text"], input[type="email"], textarea {
-            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
-        }
-        button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>Create New Vendor</h1>
+@extends('layouts.app')
 
-    @if ($errors->any())
-        <div style="color: red;">
+@section('content')
+<div class="container">
+    <h1>Add New Vendor</h1>
+
+    @if (\$errors->any())
+        <div class="alert alert-danger">
             <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                @foreach (\$errors->all() as \$error)
+                    <li>{{ \$error }}</li>
                 @endforeach
             </ul>
         </div>
@@ -28,30 +17,47 @@
     <form action="{{ route('vendors.store') }}" method="POST">
         @csrf
         <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{{ old('name') }}" required>
+            <label for="name">Vendor Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
         </div>
+
         <div class="form-group">
-            <label for="contact_person">Contact Person:</label>
-            <input type="text" id="contact_person" name="contact_person" value="{{ old('contact_person') }}">
+            <label for="address">Address</label>
+            <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
         </div>
+
         <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="{{ old('email') }}">
+            <label for="contact_person">Contact Person</label>
+            <input type="text" class="form-control" id="contact_person" name="contact_person" value="{{ old('contact_person') }}">
         </div>
+
         <div class="form-group">
-            <label for="phone">Phone:</label>
-            <input type="text" id="phone" name="phone" value="{{ old('phone') }}">
+            <label for="phone">Phone</label>
+            <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone') }}">
         </div>
+
         <div class="form-group">
-            <label for="address">Address:</label>
-            <textarea id="address" name="address">{{ old('address') }}</textarea>
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}">
         </div>
+
         <div class="form-group">
-            <label for="notes">Notes:</label>
-            <textarea id="notes" name="notes">{{ old('notes') }}</textarea>
+            <label for="products_services_supplied">Products/Services Supplied</label>
+            <textarea class="form-control" id="products_services_supplied" name="products_services_supplied" rows="3">{{ old('products_services_supplied') }}</textarea>
         </div>
-        <button type="submit">Create Vendor</button>
+
+        <div class="form-group">
+            <label for="sla_terms">SLA Terms</label>
+            <textarea class="form-control" id="sla_terms" name="sla_terms" rows="3">{{ old('sla_terms') }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="escalation_matrix">Escalation Matrix</label>
+            <textarea class="form-control" id="escalation_matrix" name="escalation_matrix" rows="3">{{ old('escalation_matrix') }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Vendor</button>
+        <a href="{{ route('vendors.index') }}" class="btn btn-secondary">Cancel</a>
     </form>
-</body>
-</html>
+</div>
+@endsection
